@@ -10,10 +10,22 @@ export default function(Vue) {
     const base = "https://api-ugo-web.itheima.net";
     opt.url = base + opt.url;
 
+
+    // 加载loading效果
+    uni.showLoading({
+      title: "加载中...",
+      // mask: true,  防止触摸穿透 : loading不消失，触摸屏幕没有反应；
+    });
+
+
     // 2.内部必定发出请求；
     const [err, res] = await uni.request({
       url: opt.url
     });
+
+
+    uni.hideLoading();
+
 
     // 对返回数据格式处理；前提：后台所有接口返回数据格式都是这个样子！
     return res.data;

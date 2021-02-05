@@ -17,94 +17,38 @@
 
     <!-- 导航条 -->
     <view class="navs">
-      <navigator open-type="switchTab" url="/pages/category/index">
-        <image src="http://static.botue.com/ugo/uploads/icon_index_nav_4@2x.png"></image>
-      </navigator>
-      <navigator url="/pages/list/index">
-        <image src="http://static.botue.com/ugo/uploads/icon_index_nav_3@2x.png"></image>
-      </navigator>
-      <navigator url="/pages/list/index">
-        <image src="http://static.botue.com/ugo/uploads/icon_index_nav_2@2x.png"></image>
-      </navigator>
-      <navigator url="/pages/list/index">
-        <image src="http://static.botue.com/ugo/uploads/icon_index_nav_1@2x.png"></image>
+      <navigator open-type="switchTab" url="/pages/category/index" v-for="item in navArr" :key="item.name">
+        <image :src="item.image_src"></image>
       </navigator>
     </view>
 
 
     <!-- 楼层 -->
     <view class="floors">
-      <view class="floor">
+
+      <view class="floor" v-for="(item,index) in floorArr" :key="index">
         <view class="title">
-          <image src="http://static.botue.com/ugo/uploads/pic_floor01_title.png"></image>
+          <image :src="item.floor_title.image_src"></image>
         </view>
         <view class="items">
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor01_1@2x.png"></image>
+
+          <navigator url="/pages/list/index" v-for="one in item.product_list" :key="one.name">
+            <image :src="one.image_src"></image>
           </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor01_2@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor01_3@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor01_4@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor01_5@2x.png"></image>
-          </navigator>
+
+
         </view>
       </view>
-      <view class="floor">
-        <view class="title">
-          <image src="http://static.botue.com/ugo/uploads/pic_floor02_title.png"/>
-        </view>
-        <view class="items">
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor02_1@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor02_2@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor02_3@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor02_4@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor02_5@2x.png"></image>
-          </navigator>
-        </view>
-      </view>
-      <view class="floor">
-        <view class="title">
-          <image src="http://static.botue.com/ugo/uploads/pic_floor03_title.png"></image>
-        </view>
-        <view class="items">
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor03_1@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor03_2@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor03_3@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor03_4@2x.png"></image>
-          </navigator>
-          <navigator url="/pages/list/index">
-            <image src="http://static.botue.com/ugo/uploads/pic_floor03_5@2x.png"></image>
-          </navigator>
-        </view>
-      </view>
+
+
     </view>
 
 
     <!-- 回到顶部 -->
-    <view class="goTop icon-top"></view>
+    <view class="goTop icon-top" @tap="scroll" v-if="key"></view>
+
+
+
   </view>
 </template>
 
@@ -116,7 +60,10 @@
     data () {
       return {
         pageHeight: 'auto',
-        swiperArr:[]
+        swiperArr:[],
+        navArr:[],
+        floorArr:[],
+        key:false,
       }
     },
 
@@ -147,11 +94,56 @@
 
         this.swiperArr = message;
       },
+      // 获取导航数据
+      async getNav(){
+        const {message}  = await this.$request({
+          url:"/api/public/v1/home/catitems"
+        });
+
+        this.navArr = message;
+      },
+      async getFloor(){
+        const {message}  = await this.$request({
+          url:"/api/public/v1/home/floordata"
+        });
+
+        this.floorArr = message;
+      },
+      // 回到顶部
+      scroll(){
+        // api:页面滚动
+        uni.pageScrollTo({scrollTop:0});
+
+
+      }
     },
     // 基本用的小程序生命周期
     onLoad(){
+      // 获取轮播图
       this.getSwiper();
 
+      // 导航
+      this.getNav();
+
+      this.getFloor();
+    },
+    // 监听下拉刷新动作
+    async onPullDownRefresh(){
+      // 刷新？该页面中所有的请求重新请求一次
+      await this.getSwiper();
+      await this.getNav();
+      await this.getFloor();
+
+      // 响应完成后：关闭效果； API;
+      uni.stopPullDownRefresh();
+    },
+    // 1.初始化：按钮是看不见！
+    // 2.什么时候能看见呢？页面滚动到某个位置的时候，才能看的见；
+    //    页面滚动的时候，怎么函数呢？特别的生命周期；onPageScroll
+    //    滚动到位置？值如何获取？拿到值有什么用？和固定值进行比较，
+    onPageScroll(e){
+      // 通过滚动去控制key的值；
+      this.key = e.scrollTop>200?true:false;
     }
   }
 </script>
